@@ -109,8 +109,10 @@ def do_screen_off(_):
 
 
 def do_wake(_):
-    subprocess.Popen(["caffeinate", "-u", "-t", "5"])
-    return "☀️ Экран разбужен"
+    # -u имитирует активность пользователя и включает экран, -d держит его включённым
+    subprocess.Popen(["caffeinate", "-u", "-t", "10"])
+    subprocess.Popen(["caffeinate", "-d", "-t", "10"])
+    return "☀️ Экран включён"
 
 
 def do_lock(_):
@@ -192,7 +194,7 @@ def do_kill(a):
 
 HANDLERS = {
     "status": do_status, "top": do_top, "battery": do_battery, "ip": do_ip,
-    "sleep": do_sleep, "screen_off": do_screen_off, "wake": do_wake, "lock": do_lock,
+    "sleep": do_sleep, "screen_off": do_screen_off, "wake": do_wake, "screen_on": do_wake, "lock": do_lock,
     "keepawake": do_keepawake, "allowsleep": do_allowsleep, "volume": do_volume,
     "mute": do_mute, "unmute": do_unmute, "notify": do_notify, "say": do_say,
     "restart": do_restart, "shutdown": do_shutdown, "kill": do_kill,
