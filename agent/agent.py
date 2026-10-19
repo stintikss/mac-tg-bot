@@ -44,10 +44,20 @@ def reply(chat_id, text):
 
 
 def do_browser_open(url):
+    # Telegram/server may pass a Markdown link instead of a raw URL.
+    # Extract its target and undo Markdown escaping before opening it.
+    match = re.search(r"\]\((https?://[^)]+)\)", url)
+    if match:
+        url = match.group(1)
+    url = url.replace(r"\&", "&").strip()
+
     if not url.startswith("https://unu.im/"):
-        return "⛔ Разрешены только ссылки unu.im"
-    subprocess.Popen(["open", "-a", "Google Chrome", url])
-    return "🌐 Открываю страницу в Google Chrome"
+        return f"⛔ Некорректная ссылка unu.im: {url[:160]}"
+    try:
+        subprocess.Popen(["open", "-a", "Google Chrome", url])
+        return f"🌐 Открываю страницу в Google Chrome: {url}"
+    except Exception as e:
+        return f"⚠️ Не удалось открыть Chrome: {e}"
 
 def do_browser_close(_):
     # macOS key code 50 = grave/tilde key; Shift produces ~ (or Ё depending on layout)
@@ -248,9 +258,7 @@ def main():
                 continue
             job = r.json().get("job")
             if job:
-                print("JOB RECEIVED:", job.get("cmd"), "id=", job.get("id"), flush=True)
                 run(job)
-                print("JOB FINISHED:", job.get("cmd"), "id=", job.get("id"), flush=True)
         except Exception as e:
             print("poll error:", e)
             time.sleep(5)

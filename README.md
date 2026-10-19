@@ -23,17 +23,3 @@
 2. Проверь кнопки «Открыть общую», «odicom», «smm», «jr».
 3. Убедись, что Chrome открыт на Mac и агент запущен.
 4. Проверь «Скрин», «Назад» и «Закрытие».
-
-
-## Установка агента на Mac (исправленная диагностика)
-
-Запускайте только один экземпляр агента. В папке проекта:
-
-```bash
-pkill -f '/agent/agent.py' || true
-cd ~/mac-tg-bot
-./.venv/bin/python -m pip install -r agent/requirements.txt
-./.venv/bin/python agent/agent.py
-```
-
-При нажатии кнопки в Terminal должна появиться строка `JOB RECEIVED`. В Render Logs будут строки `JOB QUEUED` и `JOB DISPATCHED`.

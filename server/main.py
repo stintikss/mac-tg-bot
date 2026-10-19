@@ -282,9 +282,7 @@ async def run_command(chat_id, cmd, args, role, confirmed=False):
             {"text": "❌ Отмена", "callback_data": "no||"},
         ]]}
         return await send(chat_id, DANGER[cmd] + (f" PID {args}" if args else ""), reply_markup=kb)
-    job = {"id": uuid.uuid4().hex, "cmd": cmd, "args": args, "chat_id": chat_id, "ts": time.time()}
-    queue.append(job)
-    print(f"JOB QUEUED id={job['id']} cmd={cmd} chat_id={chat_id} queue={len(queue)}", flush=True)
+    queue.append({"id": uuid.uuid4().hex, "cmd": cmd, "args": args, "chat_id": chat_id, "ts": time.time()})
     await send_plain(chat_id, f"⏳ Выполняю: {cmd}", reply_markup=main_keyboard(role))
 
 
@@ -389,9 +387,7 @@ async def agent_poll(x_agent_key: str = Header(None)):
         while queue and time.time() - queue[0]["ts"] > 60:
             queue.pop(0)  # протухшие команды не выполняем
         if queue:
-            job = queue.pop(0)
-            print(f"JOB DISPATCHED id={job['id']} cmd={job['cmd']} queue={len(queue)}", flush=True)
-            return {"job": job}
+            return {"job": queue.pop(0)}
         await asyncio.sleep(0.5)
     return {"job": None}
 
