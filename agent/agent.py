@@ -248,7 +248,9 @@ def main():
                 continue
             job = r.json().get("job")
             if job:
+                print("JOB RECEIVED:", job.get("cmd"), "id=", job.get("id"), flush=True)
                 run(job)
+                print("JOB FINISHED:", job.get("cmd"), "id=", job.get("id"), flush=True)
         except Exception as e:
             print("poll error:", e)
             time.sleep(5)
