@@ -43,6 +43,23 @@ def reply(chat_id, text):
                   json={"chat_id": chat_id, "text": text}, timeout=30)
 
 
+def do_browser_open(url):
+    if not url.startswith("https://unu.im/"):
+        return "⛔ Разрешены только ссылки unu.im"
+    subprocess.Popen(["open", "-a", "Google Chrome", url])
+    return "🌐 Открываю страницу в Google Chrome"
+
+def do_browser_close(_):
+    # macOS key code 50 = grave/tilde key; Shift produces ~ (or Ё depending on layout)
+    osa('tell application "Google Chrome" to activate')
+    osa('tell application "System Events" to key code 50 using {shift down}')
+    return "❌ Нажато Shift+` / ~ / Ё в Google Chrome"
+
+def do_browser_back(_):
+    osa('tell application "Google Chrome" to activate')
+    osa('tell application "System Events" to keystroke "[" using {command down}')
+    return "⬅️ Назад в Google Chrome"
+
 def do_status(_):
     cpu = psutil.cpu_percent(interval=1)
     vm = psutil.virtual_memory()
@@ -198,6 +215,8 @@ HANDLERS = {
     "keepawake": do_keepawake, "allowsleep": do_allowsleep, "volume": do_volume,
     "mute": do_mute, "unmute": do_unmute, "notify": do_notify, "say": do_say,
     "restart": do_restart, "shutdown": do_shutdown, "kill": do_kill,
+    "browser_open": do_browser_open, "browser_close": do_browser_close,
+    "browser_back": do_browser_back,
 }
 
 
