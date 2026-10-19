@@ -62,8 +62,8 @@ _basic — только просмотр, full — полное управлен
 """
 
 SIMPLE = {"status", "top", "battery", "wake", "screen_on", "screen_off", "lock", "shot",
-          "mute", "unmute", "keepawake", "allowsleep", "ip", "browser_close", "browser_back"}
-WITH_ARGS = {"volume", "notify", "say", "browser_open"}
+          "mute", "unmute", "keepawake", "allowsleep", "ip"}
+WITH_ARGS = {"volume", "notify", "say"}
 DANGER = {
     "sleep": "💤 Усыпить Mac?",
     "restart": "🔄 Перезагрузить Mac?",
@@ -79,7 +79,7 @@ MENU = [
     ("sleep", "Усыпить Mac"), ("screen_off", "Выключить экран"), ("screen_on", "Включить экран"),
     ("lock", "Заблокировать"), ("shot", "Скриншот"), ("volume", "Громкость"),
     ("keepawake", "Не засыпать"), ("allowsleep", "Разрешить сон"), ("online", "Mac на связи?"),
-    ("help", "Все команды"), ("shot", "Скриншот"),
+    ("help", "Все команды"),
 ]
 MENU_BASIC = [m for m in MENU if m[0] in BASIC | {"online", "help"}]
 MENU_ADMIN = MENU + [("users", "Список пользователей"), ("adduser", "Добавить пользователя"),
@@ -234,43 +234,15 @@ async def admin_command(chat_id, cmd, args):
         return await send_plain(chat_id, f"🗑 {uid} удалён")
 
 
-TASK_URLS = {
-    "general": "https://unu.im/tasks/search?price_from=&price_to=11&id=&button=1&is_search=1",
-    "odicom": "https://unu.im/tasks/search?customer_id=2235037",
-    "smm": "https://unu.im/tasks/search?customer_id=2596700",
-    "jr": "https://unu.im/tasks/search?customer_id=3418858",
-}
-
-def main_keyboard(role):
-    rows = [
-        [{"text": "📊 Статус", "callback_data": "cmd|status|"},
-         {"text": "📸 Скрин", "callback_data": "cmd|shot|"}],
-        [{"text": "▶️ Работа", "callback_data": "task|general|"},
-         {"text": "🌐 Открыть общую", "callback_data": "task|general|"}],
-        [{"text": "🧩 Открыть odicom", "callback_data": "task|odicom|"},
-         {"text": "📣 Открыть smm", "callback_data": "task|smm|"}],
-        [{"text": "🟦 Открыть jr", "callback_data": "task|jr|"},
-         {"text": "⬅️ Назад", "callback_data": "cmd|browser_back|"}],
-        [{"text": "❌ Закрытие (Shift+`/Ё)", "callback_data": "cmd|browser_close|"},
-         {"text": "🔄 Общая заново", "callback_data": "task|general|"}],
-        [{"text": "📋 Команды / помощь", "callback_data": "cmd|help|"}],
-    ]
-    if role in ("admin", "full"):
-        rows.append([{"text": "🔒 Заблокировать", "callback_data": "cmd|lock|"},
-                     {"text": "🖥 Экран", "callback_data": "cmd|screen_off|"}])
-    return {"inline_keyboard": rows}
-
 async def run_command(chat_id, cmd, args, role, confirmed=False):
     if not allowed(role, cmd):
         return await send_plain(chat_id, "⛔ Нет прав на эту команду. /help")
     if cmd in ("start", "help"):
-        return await send(chat_id, HELP_ADMIN if role == "admin" else HELP_FULL if role == "full" else HELP_USER,
-                          reply_markup=main_keyboard(role))
+        return await send(chat_id, HELP_ADMIN if role == "admin" else HELP_FULL if role == "full" else HELP_USER)
     if cmd in ADMIN_ONLY:
         return await admin_command(chat_id, cmd, args)
     if cmd == "online":
-        return await send(chat_id, "🟢 Mac на связи" if online() else "🔴 Mac офлайн (спит / нет сети / агент не запущен)",
-                          reply_markup=main_keyboard(role))
+        return await send(chat_id, "🟢 Mac на связи" if online() else "🔴 Mac офлайн (спит / нет сети / агент не запущен)")
     if cmd not in ALL:
         return await send(chat_id, "Неизвестная команда. /help")
     if not online():
@@ -283,7 +255,6 @@ async def run_command(chat_id, cmd, args, role, confirmed=False):
         ]]}
         return await send(chat_id, DANGER[cmd] + (f" PID {args}" if args else ""), reply_markup=kb)
     queue.append({"id": uuid.uuid4().hex, "cmd": cmd, "args": args, "chat_id": chat_id, "ts": time.time()})
-    await send_plain(chat_id, f"⏳ Выполняю: {cmd}", reply_markup=main_keyboard(role))
 
 
 async def handle_stranger(msg):
@@ -320,19 +291,9 @@ async def telegram_webhook(request: Request, x_telegram_bot_api_secret_token: st
             return {"ok": True}
         chat_id = cq["message"]["chat"]["id"]
         await tg("answerCallbackQuery", callback_query_id=cq["id"])
-        action, a, b = (cq["data"].split("|", 2) + ["", ""])[:3]
-        if action in ("cmd", "task"):
-            if action == "task":
-                url = TASK_URLS.get(a)
-                if url:
-                    await run_command(chat_id, "browser_open", url, role)
-            elif a == "browser_open":
-                await run_command(chat_id, a, b, role)
-            else:
-                await run_command(chat_id, a, b, role)
-            return {"ok": True}
         await tg("editMessageReplyMarkup", chat_id=chat_id,
                  message_id=cq["message"]["message_id"], reply_markup={"inline_keyboard": []})
+        action, a, b = (cq["data"].split("|", 2) + ["", ""])[:3]
         if action == "adm":
             if role != "admin":
                 return {"ok": True}

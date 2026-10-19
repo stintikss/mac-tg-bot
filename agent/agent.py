@@ -1,6 +1,5 @@
 """Агент для Mac: забирает команды у сервера на Render и выполняет их."""
 import os
-import re
 import socket
 import subprocess
 import time
@@ -43,29 +42,6 @@ def reply(chat_id, text):
     requests.post(f"{SERVER}/agent/result", headers=HEADERS,
                   json={"chat_id": chat_id, "text": text}, timeout=30)
 
-
-def do_browser_open(value):
-    """Open a unu.im task URL, accepting plain URLs or Markdown links."""
-    value = str(value).strip()
-    match = re.search(r'\]\((https?://[^)]+)\)', value)
-    url = match.group(1) if match else value
-    url = url.replace(r"\&", "&").strip()
-
-    if not url.startswith("https://unu.im/"):
-        return "⛔ Разрешены только ссылки unu.im"
-
-    subprocess.Popen(["open", "-a", "Google Chrome", url])
-    return f"🌐 Открываю страницу в Google Chrome: {url}"
-
-def do_browser_close(_):
-    osa('tell application "Google Chrome" to activate')
-    osa('tell application "System Events" to key code 50 using {shift down}')
-    return "⌨️ Отправлено Shift + клавиша Ё в Chrome"
-
-def do_browser_back(_):
-    osa('tell application "Google Chrome" to activate')
-    osa('tell application "System Events" to keystroke "[" using {command down}')
-    return "⬅️ Назад в Google Chrome"
 
 def do_status(_):
     cpu = psutil.cpu_percent(interval=1)
@@ -222,8 +198,6 @@ HANDLERS = {
     "keepawake": do_keepawake, "allowsleep": do_allowsleep, "volume": do_volume,
     "mute": do_mute, "unmute": do_unmute, "notify": do_notify, "say": do_say,
     "restart": do_restart, "shutdown": do_shutdown, "kill": do_kill,
-    "browser_open": do_browser_open, "browser_close": do_browser_close,
-    "browser_back": do_browser_back,
 }
 
 
